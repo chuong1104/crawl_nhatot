@@ -31,7 +31,7 @@ python -m playwright install
 ### 2. Chạy chương trình
 
 - Thay đổi số trang muốn cào trong hàm main.py
-# Tùy chọn số trang tối đa để cào
+- Tùy chọn số trang tối đa để cào
     max_pages = 2
 
 ### 3. Kết quả
