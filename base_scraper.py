@@ -4,6 +4,7 @@ from playwright.async_api import async_playwright
 import time
 import random
 import os
+from utils import create_directory, clean_filename  # Thêm import
 
 class BaseScraper:
     def __init__(self, config, max_pages):
@@ -66,10 +67,12 @@ class BaseScraper:
     async def save_debug_info(self, page, filename_prefix="debug"):
         """Lưu thông tin debug"""
         try:
-            screenshot_path = os.path.join(self.config.SCREENSHOTS_DIR, f"{filename_prefix}_screenshot.png")
+            # Sử dụng clean_filename từ utils
+            safe_filename = clean_filename(filename_prefix)
+            screenshot_path = os.path.join(self.config.SCREENSHOTS_DIR, f"{safe_filename}_screenshot.png")
             await page.screenshot(path=screenshot_path)
             
-            html_path = os.path.join(self.config.LOGS_DIR, f"{filename_prefix}_content.html")
+            html_path = os.path.join(self.config.LOGS_DIR, f"{safe_filename}_content.html")
             html = await page.content()
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(html)
@@ -84,10 +87,13 @@ class BaseScraper:
             page_info = f"_page{current_page}" if current_page else ""
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             
-            screenshot_path = os.path.join(self.config.ERRORS_DIR, f"error{page_info}_{timestamp}.png")
+            # Sử dụng clean_filename từ utils
+            safe_filename = clean_filename(f"error{page_info}_{timestamp}")
+            
+            screenshot_path = os.path.join(self.config.ERRORS_DIR, f"{safe_filename}.png")
             await page.screenshot(path=screenshot_path)
             
-            error_log_path = os.path.join(self.config.ERRORS_DIR, f"error{page_info}_{timestamp}.txt")
+            error_log_path = os.path.join(self.config.ERRORS_DIR, f"{safe_filename}.txt")
             with open(error_log_path, "w", encoding="utf-8") as f:
                 f.write(f"URL: {await page.evaluate('() => window.location.href')}\n")
                 f.write(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
