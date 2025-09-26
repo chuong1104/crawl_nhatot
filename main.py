@@ -36,7 +36,7 @@ async def main():
     config.ERRORS_DIR = errors_dir
     
     # Tùy chọn số trang tối đa để cào
-    max_pages = 1  # Chỉ lấy 1 trang để thử nghiệm
+    max_pages = 100  # Chỉ lấy 1 trang để thử nghiệm
     if len(sys.argv) > 1:
         try:
             max_pages = int(sys.argv[1])

@@ -180,13 +180,14 @@ class OtoComVnScraper(BaseScraper):
                     break
             except Exception as e:
                 continue
-         # Sử dụng hàm extract_price từ utils
+        
+        # Sử dụng hàm extract_price từ utils
         price_value = extract_price(price_raw)
         car_info['price_raw'] = price_raw
         car_info['price_value'] = price_value
         car_info['price_display'] = f"{price_value:,.0f} VND" if price_value else 'N/A'
                
-         # Lấy ngày đăng bài
+        # Lấy ngày đăng bài
         car_info['date_posted'] = 'N/A'
         for selector in self.config.DATE_POSTED_SELECTORS:
             try:
@@ -198,29 +199,6 @@ class OtoComVnScraper(BaseScraper):
                         break
             except Exception as e:
                 continue
-            try:
-                date_elem = await page.query_selector(selector)
-                if date_elem:
-                    date_text = await date_elem.text_content()
-                    if date_text and date_text.strip():
-                        car_info['date_posted'] = date_text.strip()
-                        break
-            except Exception as e:
-                continue
-
-        # Xử lý nút "Hiển thị thêm" cho mô tả
-        # try:
-        #     show_more_button = await page.query_selector(self.config.SHOW_MORE_DESCRIPTION_SELECTOR)
-        #     if show_more_button:
-        #         is_visible = await show_more_button.is_visible()
-        #         if is_visible:
-        #             await show_more_button.scroll_into_view_if_needed()
-        #             await page.wait_for_timeout(1000)
-        #             await show_more_button.click()
-        #             print("Đã click nút 'Hiển thị thêm' để mở rộng mô tả")
-        #             await page.wait_for_timeout(2000)
-        # except Exception as e:
-        #     print(f"Lỗi khi click nút 'Hiển thị thêm' trong trang chi tiết: {e}")
 
         # Lấy các thông tin từ box-info-detail
         for key, selector in self.config.DETAIL_SELECTORS.items():
@@ -238,17 +216,18 @@ class OtoComVnScraper(BaseScraper):
                 print(f"Lỗi khi lấy {key}: {e}")
                 car_info[key] = 'N/A'
 
-        # Lấy mô tả (sau khi đã mở rộng)
-        # try:
-        #     desc_elem = await page.query_selector(self.config.DESCRIPTION_SELECTOR)
-        #     if desc_elem:
-        #         car_info['description'] = await desc_elem.text_content()
-        #     else:
-        #         car_info['description'] = 'N/A'
-        # except Exception as e:
-        #     car_info['description'] = 'N/A'
+        # Xử lý đặc biệt cho km_driven để đảm bảo lấy đúng số km
+        if 'km_driven' in car_info and car_info['km_driven'] != 'N/A':
+            km_text = car_info['km_driven']
+            # Nếu có dạng "3.900 km" nhưng bị hiểu là 3.9, cần xử lý riêng
+            if '.' in str(km_text):
+                parts = str(km_text).split('.')
+                if len(parts) == 2 and len(parts[1]) == 3:
+                    # Đây là dạng 3.900 -> thực tế là 3900 km
+                    actual_km = int(parts[0]) * 1000 + int(parts[1])
+                    car_info['km_driven'] = f"{actual_km} km"
 
-          # Chuẩn hóa dữ liệu sử dụng hàm normalize_car_data
+        # Chuẩn hóa dữ liệu sử dụng hàm normalize_car_data
         normalized_info = normalize_car_data(car_info)
         return normalized_info
 

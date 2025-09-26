@@ -104,17 +104,65 @@ class BaseScraper:
             print(f"Không thể lưu thông tin lỗi: {e}")
 
     async def save_partial_data(self, current_page):
-        """Lưu dữ liệu tạm thời"""
+        """Lưu dữ liệu tạm thời với tên cột tiếng Việt"""
         if self.data:
             print(f"Lưu dữ liệu tạm thời sau khi xử lý trang {current_page}...")
-            temp_df = pd.DataFrame(self.data)
-            temp_df.to_csv(self.config.OUTPUT_FILE_PARTIAL, index=False, encoding='utf-8-sig')
+            df = pd.DataFrame(self.data)
+            
+            # Đổi tên cột sang tiếng Việt và chọn các cột cần thiết
+            column_mapping = {
+                'title': 'Tên xe',
+                'price_display': 'Giá tiền',
+                'date_posted': 'Ngày đăng bài',
+                'manufacture_year': 'Năm sản xuất',
+                'fuel': 'Nhiên liệu',
+                'body_style': 'Kiểu dáng',
+                'condition': 'Tình trạng',
+                'km_display': 'Số km đã đi',
+                'transmission': 'Hộp số',
+                'origin': 'Xuất xứ',
+                'location': 'Địa điểm',
+                'url': 'URL'
+            }
+            
+            # Chỉ giữ lại các cột cần thiết
+            available_columns = [col for col in column_mapping.keys() if col in df.columns]
+            df = df[available_columns]
+            
+            # Đổi tên cột
+            df = df.rename(columns=column_mapping)
+            
+            df.to_csv(self.config.OUTPUT_FILE_PARTIAL, index=False, encoding='utf-8-sig')
             print(f"Đã lưu {len(self.data)} bản ghi vào file tạm: {self.config.OUTPUT_FILE_PARTIAL}")
 
     async def save_final_data(self):
-        """Lưu dữ liệu cuối cùng"""
+        """Lưu dữ liệu cuối cùng với tên cột tiếng Việt"""
         if self.data:
             df = pd.DataFrame(self.data)
+            
+            # Đổi tên cột sang tiếng Việt và chọn các cột cần thiết
+            column_mapping = {
+                'title': 'Tên xe',
+                'price_display': 'Giá tiền',
+                'date_posted': 'Ngày đăng bài',
+                'manufacture_year': 'Năm sản xuất',
+                'fuel': 'Nhiên liệu',
+                'body_style': 'Kiểu dáng',
+                'condition': 'Tình trạng',
+                'km_display': 'Số km đã đi',
+                'transmission': 'Hộp số',
+                'origin': 'Xuất xứ',
+                'location': 'Địa điểm',
+                'url': 'URL'
+            }
+            
+            # Chỉ giữ lại các cột cần thiết
+            available_columns = [col for col in column_mapping.keys() if col in df.columns]
+            df = df[available_columns]
+            
+            # Đổi tên cột
+            df = df.rename(columns=column_mapping)
+            
             df.to_csv(self.config.OUTPUT_FILE, index=False, encoding='utf-8-sig')
             print(f"Đã lưu {len(self.data)} bản ghi vào file {self.config.OUTPUT_FILE}")
             

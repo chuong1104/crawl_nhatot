@@ -4,5 +4,8 @@ from .scraper_utils import (
     clean_text, 
     extract_price, 
     extract_area, 
-    extract_number
+    extract_number,
+    normalize_car_data,
+    extract_km,
+    extract_year
 )

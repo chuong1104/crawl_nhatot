@@ -82,26 +82,41 @@ def format_price(price_value):
         return f"{int(price_value)} đồng"
 
 def extract_km(km_text):
-    """Trích xuất số km từ chuỗi văn bản"""
+    """Trích xuất số km từ chuỗi văn bản - Sửa để xử lý đúng định dạng"""
     if not km_text or km_text == 'N/A':
         return None
         
     # Chuẩn hóa chuỗi km
     km_text = str(km_text).lower().replace('km', '').strip()
     
-    # Trích xuất số (hỗ trợ định dạng 3.900 km)
+    # Xử lý trường hợp có dấu chấm phân cách hàng nghìn (ví dụ: 3.900 km)
+    if '.' in km_text and len(km_text.split('.')[-1]) == 3:
+        # Đây có thể là dấu chấm phân cách hàng nghìn
+        km_text = km_text.replace('.', '')
+    
+    # Trích xuất số
     number = extract_number(km_text)
     return number
 
 def format_km(km_value):
-    """Định dạng số km thành chuỗi dễ đọc"""
+    """Định dạng số km thành chuỗi dễ đọc - Sửa để hiển thị đúng số km"""
     if not km_value:
         return "N/A"
     
+    # Nếu km_value là số thập phân (ví dụ: 3.9) nhưng thực tế là 3900 km
+    if km_value < 100:  # Giả sử nếu giá trị nhỏ hơn 100, có thể là đang bị hiểu nhầm thành nghìn km
+        # Kiểm tra xem có phải là số thập phân không (ví dụ: 3.9 thực tế là 3900 km)
+        if isinstance(km_value, float) and km_value != int(km_value):
+            # Nhân với 1000 để chuyển thành km thực tế
+            km_value = km_value * 1000
+    
+    # Định dạng số với dấu phân cách hàng nghìn
     if km_value >= 1000000:
-        return f"{km_value / 1000000:.1f} triệu km"
+        return f"{km_value / 1000000:.1f} triệu km".replace('.', ',')
     elif km_value >= 1000:
-        return f"{int(km_value / 1000)}.{int(km_value % 1000 / 100):01d} nghìn km" if km_value % 1000 >= 100 else f"{int(km_value / 1000)} nghìn km"
+        # Hiển thị đầy đủ số km với dấu phân cách
+        formatted_km = f"{km_value:,.0f}".replace(',', '.')
+        return f"{formatted_km} km"
     else:
         return f"{int(km_value)} km"
 
@@ -245,27 +260,35 @@ def extract_area(area_text):
 
 # Hàm mới để chuẩn hóa toàn bộ dữ liệu xe
 def normalize_car_data(car_data):
-    """Chuẩn hóa toàn bộ dữ liệu xe ô tô"""
+    """Chuẩn hóa toàn bộ dữ liệu xe ô tô - Sửa để xử lý đúng km"""
     normalized = car_data.copy()
     
     # Chuẩn hóa từng trường
     if 'title' in normalized:
         normalized['title'] = clean_car_name(normalized['title'])
     
-    if 'price' in normalized and normalized['price'] != 'N/A':
-        price_value = extract_price(normalized['price'])
+    # Xử lý giá
+    if 'price_raw' in normalized and normalized['price_raw'] != 'N/A':
+        price_value = extract_price(normalized['price_raw'])
         if price_value:
             normalized['price_value'] = price_value
-            normalized['price_display'] = format_price(price_value)
+            normalized['price_display'] = f"{price_value:,.0f} VND".replace(',', '.')
         else:
             normalized['price_value'] = None
             normalized['price_display'] = 'N/A'
     
+    # Xử lý km - sửa để hiển thị đúng
     if 'km_driven' in normalized and normalized['km_driven'] != 'N/A':
         km_value = extract_km(normalized['km_driven'])
         if km_value:
             normalized['km_value'] = km_value
-            normalized['km_display'] = format_km(km_value)
+            # Sửa: Hiển thị đầy đủ số km
+            if km_value < 100 and isinstance(km_value, float) and km_value != int(km_value):
+                # Nếu là số thập phân nhỏ, nhân với 1000
+                actual_km = km_value * 1000
+                normalized['km_display'] = f"{actual_km:,.0f} km".replace(',', '.')
+            else:
+                normalized['km_display'] = format_km(km_value)
         else:
             normalized['km_value'] = None
             normalized['km_display'] = 'N/A'
@@ -289,8 +312,5 @@ def normalize_car_data(car_data):
     
     if 'location' in normalized and normalized['location'] != 'N/A':
         normalized['location'] = clean_location(normalized['location'])
-    
-    if 'description' in normalized and normalized['description'] != 'N/A':
-        normalized['description'] = clean_text(normalized['description'])
     
     return normalized

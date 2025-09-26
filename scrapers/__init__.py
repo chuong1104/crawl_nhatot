@@ -1,2 +1,2 @@
-from .nhatot_scraper import NhaTotScraper
-# Thêm các scraper khác ở đây
+from .oto_scraper import OtoComVnScraper
+# Thêm các scraper và config khác ở đây
