@@ -13,8 +13,8 @@ class OtoComVnConfig:
     ERRORS_DIR = 'results/errors'
     
     # Tên file đầu ra
-    OUTPUT_FILE = os.path.join(CSV_DIR, 'oto_com_vn_cars.csv')
-    OUTPUT_FILE_PARTIAL = os.path.join(CSV_DIR, 'oto_com_vn_cars_partial.csv')
+    OUTPUT_FILE = os.path.join(CSV_DIR, 'oto2_com_vn_cars.csv')
+    OUTPUT_FILE_PARTIAL = os.path.join(CSV_DIR, 'oto2_com_vn_cars_partial.csv')
     
     BROWSER_ARGS = [
         '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
@@ -68,11 +68,15 @@ class OtoComVnConfig:
     
     # Selectors cho giá xe (cập nhật dựa trên HTML mới)
     PRICE_SELECTORS = [
-        'p.price',
-        '.price',
-        '.info-right .price',
-        'div.price',
-        '[class*="price"]'
+    'span.price',
+    'p.price',
+    '.price',
+    '.info-right .price',
+    'div.price',
+    'p.price.redprice',
+    'span.price.redprice',
+    '.vehicle-price',
+    '.cost'
     ]
     
     # Selectors cho ngày đăng bài
@@ -113,5 +117,7 @@ class OtoComVnConfig:
         'a.pagination-next',
         'a.next'
     ]
-    
+    # Selectors cho nút "Hiển thị thêm"
+    LOAD_MORE_SELECTOR = "span.btn-loadmore[onclick='ListAuto.getData()']"
+
     PAGINATION_URL_TEMPLATE = "https://oto.com.vn/mua-ban-xe/p{}"

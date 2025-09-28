@@ -2,10 +2,38 @@ from .scraper_utils import (
     create_directory, 
     clean_filename, 
     clean_text, 
+    extract_number, 
     extract_price, 
+    format_price, 
+    extract_km, 
+    format_km, 
+    extract_year, 
+    clean_car_name, 
+    extract_fuel_type, 
+    extract_transmission, 
+    extract_car_condition, 
+    extract_origin, 
+    clean_location, 
     extract_area, 
-    extract_number,
-    normalize_car_data,
-    extract_km,
-    extract_year
+    normalize_car_data
 )
+
+__all__ = [
+    'create_directory',
+    'clean_filename', 
+    'clean_text',
+    'extract_number',
+    'extract_price',
+    'format_price',
+    'extract_km',
+    'format_km',
+    'extract_year',
+    'clean_car_name',
+    'extract_fuel_type',
+    'extract_transmission',
+    'extract_car_condition',
+    'extract_origin',
+    'clean_location',
+    'extract_area',
+    'normalize_car_data'
+]

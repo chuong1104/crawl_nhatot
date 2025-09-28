@@ -112,13 +112,13 @@ class BaseScraper:
             # Đổi tên cột sang tiếng Việt và chọn các cột cần thiết
             column_mapping = {
                 'title': 'Tên xe',
-                'price_display': 'Giá tiền',
+                'price': 'Giá tiền',  
                 'date_posted': 'Ngày đăng bài',
                 'manufacture_year': 'Năm sản xuất',
                 'fuel': 'Nhiên liệu',
                 'body_style': 'Kiểu dáng',
                 'condition': 'Tình trạng',
-                'km_display': 'Số km đã đi',
+                'km_driven': 'Số km đã đi',
                 'transmission': 'Hộp số',
                 'origin': 'Xuất xứ',
                 'location': 'Địa điểm',
@@ -143,13 +143,13 @@ class BaseScraper:
             # Đổi tên cột sang tiếng Việt và chọn các cột cần thiết
             column_mapping = {
                 'title': 'Tên xe',
-                'price_display': 'Giá tiền',
+                'price': 'Giá tiền', 
                 'date_posted': 'Ngày đăng bài',
                 'manufacture_year': 'Năm sản xuất',
                 'fuel': 'Nhiên liệu',
                 'body_style': 'Kiểu dáng',
                 'condition': 'Tình trạng',
-                'km_display': 'Số km đã đi',
+                'km_driven': 'Số km đã đi',
                 'transmission': 'Hộp số',
                 'origin': 'Xuất xứ',
                 'location': 'Địa điểm',
@@ -200,43 +200,52 @@ class BaseScraper:
             await page.wait_for_timeout(self.config.INITIAL_WAIT_TIME)
             await self.handle_popups(page)
             
-            current_page = 1
-            
-            while current_page <= self.max_pages:
-                print(f"\n--- ĐANG XỬ LÝ TRANG {current_page} ---\n")
+            # Kiểm tra xem có phải scraper dùng load more không
+            if hasattr(self, 'load_more_count'):
+                # Scraper dùng load more (như OtoComVnScraper)
+                print(f"Số lần nhấn 'Hiển thị thêm' tối đa: {self.max_pages}")
+                await self.extract_data(page)
+                print(f"Tổng số lần nhấn 'Hiển thị thêm': {self.load_more_count}")
+            else:
+                # Scraper dùng phân trang truyền thống
+                current_page = 1
                 
-                try:
-                    await self.auto_scroll(page)
-                    await self.extract_data(page)
-                    await self.save_partial_data(current_page)
-                    
-                    if current_page == self.max_pages:
-                        break
-                        
-                    success = await self.go_to_next_page(page, current_page)
-                    if not success:
-                        print(f"Không thể chuyển sang trang {current_page + 1}, dừng việc cào dữ liệu.")
-                        break
-                        
-                    current_page += 1
-                    
-                    pause_time = self.config.PAGE_PAUSE_TIME + random.random() * 3
-                    print(f"Đợi {pause_time:.2f} giây trước khi xử lý trang tiếp theo...")
-                    await page.wait_for_timeout(pause_time * 1000)
-                    
-                except Exception as e:
-                    print(f"Lỗi khi xử lý trang {current_page}: {e}")
-                    await self.save_error_info(page, e, current_page)
-                    await self.save_partial_data(current_page)
+                while current_page <= self.max_pages:
+                    print(f"\n--- ĐANG XỬ LÝ TRANG {current_page} ---\n")
                     
                     try:
-                        await page.reload()
-                        await page.wait_for_load_state('networkidle')
-                        await page.wait_for_timeout(5000)
-                    except:
-                        break
+                        await self.auto_scroll(page)
+                        await self.extract_data(page)
+                        await self.save_partial_data(current_page)
+                        
+                        if current_page == self.max_pages:
+                            break
+                            
+                        success = await self.go_to_next_page(page, current_page)
+                        if not success:
+                            print(f"Không thể chuyển sang trang {current_page + 1}, dừng việc cào dữ liệu.")
+                            break
+                            
+                        current_page += 1
+                        
+                        pause_time = self.config.PAGE_PAUSE_TIME + random.random() * 3
+                        print(f"Đợi {pause_time:.2f} giây trước khi xử lý trang tiếp theo...")
+                        await page.wait_for_timeout(pause_time * 1000)
+                        
+                    except Exception as e:
+                        print(f"Lỗi khi xử lý trang {current_page}: {e}")
+                        await self.save_error_info(page, e, current_page)
+                        await self.save_partial_data(current_page)
+                        
+                        try:
+                            await page.reload()
+                            await page.wait_for_load_state('networkidle')
+                            await page.wait_for_timeout(5000)
+                        except:
+                            break
             
             await self.save_final_data()
+            print(f"Tổng số xe đã thu thập: {len(self.data)}")
                 
         except Exception as e:
             print(f"Lỗi trong quá trình scraping: {e}")

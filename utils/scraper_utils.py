@@ -38,7 +38,7 @@ def extract_number(text):
     return float(matches[0]) if matches else None
 
 def extract_price(price_text):
-    """Trích xuất giá từ chuỗi văn bản - tối ưu cho xe ô tô"""
+    """Trích xuất giá thành số nguyên từ chuỗi văn bản"""
     if not price_text or price_text == 'N/A':
         return None
         
@@ -46,27 +46,57 @@ def extract_price(price_text):
     price_text = str(price_text).lower().strip()
     
     # Loại bỏ các từ không cần thiết
-    unwanted_words = ['giá', 'xe', 'ôtô', 'oto', 'bán', 'mua', ':', '-']
+    unwanted_words = ['giá', 'xe', 'ôtô', 'oto', 'bán', 'mua', ':', '-', 'vnd', 'đồng', 'vnđ', 'redprice']
     for word in unwanted_words:
         price_text = price_text.replace(word, '')
-    price_text = price_text.strip()
+    price_text = re.sub(r'\s+', ' ', price_text).strip()
     
-    # Trích xuất số
-    number = extract_number(price_text)
-    if not number:
+    # Xử lý các trường hợp đặc biệt
+    if 'liên hệ' in price_text or 'thỏa thuận' in price_text:
         return None
     
-    # Xác định đơn vị tiền tệ
+    # Xử lý định dạng "X tỉ Y triệu"
     if 'tỷ' in price_text or 'tỉ' in price_text:
-        return number * 1000000000
+        # Tách thành phần tỷ và triệu
+        billion_part = 0
+        million_part = 0
+        
+        # Tìm phần tỷ
+        billion_match = re.search(r'(\d+(?:[.,]\d+)?)\s*(tỷ|tỉ)', price_text)
+        if billion_match:
+            billion_part = extract_number(billion_match.group(1))
+        
+        # Tìm phần triệu
+        million_match = re.search(r'(\d+(?:[.,]\d+)?)\s*(triệu|tr)', price_text)
+        if million_match:
+            million_part = extract_number(million_match.group(1))
+        
+        if billion_part is not None or million_part is not None:
+            total = (billion_part * 1000000000 if billion_part else 0) + \
+                   (million_part * 1000000 if million_part else 0)
+            return int(total)  # Trả về số nguyên
+    
+    # Xử lý định dạng chỉ có triệu
     elif 'triệu' in price_text or 'tr' in price_text:
-        return number * 1000000
+        number = extract_number(price_text)
+        return int(number * 1000000) if number else None  # Trả về số nguyên
+    
+    # Xử lý định dạng chỉ có nghìn
     elif 'nghìn' in price_text or 'k' in price_text:
-        return number * 1000
+        number = extract_number(price_text)
+        return int(number * 1000) if number else None  # Trả về số nguyên
+    
     else:
-        # Nếu không có đơn vị rõ ràng, giả sử là triệu nếu số nhỏ hơn 1000
-        return number * 1000000 if number < 1000 else number
-
+        # Nếu không có đơn vị rõ ràng, thử trích xuất số và đoán đơn vị
+        number = extract_number(price_text)
+        if number:
+            # Nếu số lớn hơn 1000, giả sử là triệu
+            if number > 1000:
+                return int(number * 1000000)  # Trả về số nguyên
+            else:
+                return int(number * 1000000)  # Mặc định là triệu cho số nhỏ
+    
+    return None
 def format_price(price_value):
     """Định dạng giá thành chuỗi dễ đọc"""
     if not price_value:
@@ -124,15 +154,18 @@ def extract_year(year_text):
     """Trích xuất năm từ chuỗi văn bản"""
     if not year_text or year_text == 'N/A':
         return None
-        
+    
+    # Loại bỏ các từ không cần thiết
+    year_text = str(year_text).replace('Năm SX:', '').strip()
+    
     # Tìm số có 4 chữ số (năm)
     matches = re.findall(r'\b(19|20)\d{2}\b', str(year_text))
     if matches:
-        return int(matches[0])
+        return int(matches[0] + year_text[-2:])  # Ghép lại để lấy năm đầy đủ
     
-    # Tìm bất kỳ số nào từ 1990-2030
+    # Nếu không tìm thấy theo cách trên, thử trích xuất số trực tiếp
     number = extract_number(year_text)
-    if number and 1990 <= number <= 2030:
+    if number and 1900 <= number <= 2030:
         return int(number)
     
     return None
@@ -260,57 +293,50 @@ def extract_area(area_text):
 
 # Hàm mới để chuẩn hóa toàn bộ dữ liệu xe
 def normalize_car_data(car_data):
-    """Chuẩn hóa toàn bộ dữ liệu xe ô tô - Sửa để xử lý đúng km"""
+    """Chuẩn hóa dữ liệu xe - phiên bản đơn giản chỉ giữ giá trị số"""
     normalized = car_data.copy()
     
     # Chuẩn hóa từng trường
     if 'title' in normalized:
         normalized['title'] = clean_car_name(normalized['title'])
     
-    # Xử lý giá
-    if 'price_raw' in normalized and normalized['price_raw'] != 'N/A':
-        price_value = extract_price(normalized['price_raw'])
-        if price_value:
-            normalized['price_value'] = price_value
-            normalized['price_display'] = f"{price_value:,.0f} VND".replace(',', '.')
-        else:
-            normalized['price_value'] = None
-            normalized['price_display'] = 'N/A'
+    # Price đã là số, không cần xử lý thêm
+    # Chỉ cần đảm bảo price là số nguyên nếu có
+    if 'price' in normalized and normalized['price'] is not None:
+        normalized['price'] = int(normalized['price'])
     
-    # Xử lý km - sửa để hiển thị đúng
     if 'km_driven' in normalized and normalized['km_driven'] != 'N/A':
         km_value = extract_km(normalized['km_driven'])
         if km_value:
-            normalized['km_value'] = km_value
-            # Sửa: Hiển thị đầy đủ số km
-            if km_value < 100 and isinstance(km_value, float) and km_value != int(km_value):
-                # Nếu là số thập phân nhỏ, nhân với 1000
-                actual_km = km_value * 1000
-                normalized['km_display'] = f"{actual_km:,.0f} km".replace(',', '.')
-            else:
-                normalized['km_display'] = format_km(km_value)
-        else:
-            normalized['km_value'] = None
-            normalized['km_display'] = 'N/A'
+            normalized['km_driven'] = int(km_value)
     
     if 'manufacture_year' in normalized and normalized['manufacture_year'] != 'N/A':
         year_value = extract_year(normalized['manufacture_year'])
         if year_value:
             normalized['manufacture_year'] = year_value
     
-    if 'fuel' in normalized and normalized['fuel'] != 'N/A':
-        normalized['fuel'] = extract_fuel_type(normalized['fuel'])
+    # Chuẩn hóa các trường text khác
+    text_fields = ['fuel', 'transmission', 'condition', 'origin', 'location']
+    for field in text_fields:
+        if field in normalized and normalized[field] != 'N/A':
+            if field == 'fuel':
+                normalized[field] = extract_fuel_type(normalized[field])
+            elif field == 'transmission':
+                normalized[field] = extract_transmission(normalized[field])
+            elif field == 'condition':
+                normalized[field] = extract_car_condition(normalized[field])
+            elif field == 'origin':
+                normalized[field] = extract_origin(normalized[field])
+            elif field == 'location':
+                normalized[field] = clean_location(normalized[field])
     
-    if 'transmission' in normalized and normalized['transmission'] != 'N/A':
-        normalized['transmission'] = extract_transmission(normalized['transmission'])
+    if 'description' in normalized and normalized['description'] != 'N/A':
+        normalized['description'] = clean_text(normalized['description'])
     
-    if 'condition' in normalized and normalized['condition'] != 'N/A':
-        normalized['condition'] = extract_car_condition(normalized['condition'])
-    
-    if 'origin' in normalized and normalized['origin'] != 'N/A':
-        normalized['origin'] = extract_origin(normalized['origin'])
-    
-    if 'location' in normalized and normalized['location'] != 'N/A':
-        normalized['location'] = clean_location(normalized['location'])
+    # Xóa các trường không cần thiết nếu có
+    fields_to_remove = ['price_raw', 'price_display', 'price_value', 'km_value', 'km_display']
+    for field in fields_to_remove:
+        if field in normalized:
+            del normalized[field]
     
     return normalized
