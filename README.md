@@ -19,7 +19,7 @@ Dự án này sử dụng Python và Playwright để tự động thu thập th
 - **Thông số vận hành**: Số km đã đi, hộp số
 - **Thông tin khác**: Xuất xứ, địa điểm bán, URL gốc
 
-### 🔧 Tính năng kỹ thuật
+### Tính năng kỹ thuật
 - **Asynchronous**: Sử dụng asyncio để xử lý đồng thời, tăng tốc độ scraping
 - **Stealth mode**: Sử dụng Playwright với chế độ ẩn danh để tránh bị chặn
 - **Auto-retry**: Tự động thử lại khi kết nối thất bại
