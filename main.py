@@ -24,7 +24,7 @@ async def main():
     for directory in [csv_dir, screenshots_dir, logs_dir, errors_dir]:
         if not os.path.exists(directory):
             create_directory(directory)
-            print(f"Đã tạo thư mục: {directory}")
+            print(f"Thư mục đã tạo: {directory}")
         else:
             print(f"Thư mục đã tồn tại, bỏ qua: {directory}")
     
@@ -35,16 +35,10 @@ async def main():
     config.LOGS_DIR = logs_dir
     config.ERRORS_DIR = errors_dir
     
-    # Tùy chọn số trang tối đa để cào
-    max_pages = 500  
-    if len(sys.argv) > 1:
-        try:
-            max_pages = int(sys.argv[1])
-        except ValueError:
-            print(f"Tham số không hợp lệ: {sys.argv[1]}")
+    print("Bắt đầu quá trình cào dữ liệu từ file CSV...")
 
-    # Tạo và chạy scraper
-    scraper = OtoComVnScraper(config, max_pages=max_pages)
+    # Sửa lỗi bằng cách thêm tham số max_pages=0
+    scraper = OtoComVnScraper(config, max_pages=0)
     await scraper.scrape()
 
 if __name__ == "__main__":

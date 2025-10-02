@@ -62,10 +62,6 @@ class OtoComVnConfig:
         'a[href*="/mua-ban-xe"]'
     ]
     
-    # Selectors cho nút "Hiển thị thêm"
-    LOAD_MORE_SELECTOR = "span.btn-loadmore[onclick*='ListAuto.getData']"
-    # SHOW_MORE_DESCRIPTION_SELECTOR = "button.btn-show.btn-show-colspan" 
-    
     # Selectors cho giá xe (cập nhật dựa trên HTML mới)
     PRICE_SELECTORS = [
     'span.price',
@@ -108,16 +104,4 @@ class OtoComVnConfig:
         '[class*="title"]'
     ]
     
-    # Pagination selectors
-    PAGINATION_SELECTORS = [
-        'a[href*="/mua-ban-xe/p{}"]',
-        'a[href*="page={}"]',
-        'a[href*="trang-{}"]',
-        'a:has-text("{}")',
-        'a.pagination-next',
-        'a.next'
-    ]
-    # Selectors cho nút "Hiển thị thêm"
-    LOAD_MORE_SELECTOR = "span.btn-loadmore[onclick='ListAuto.getData()']"
-
     PAGINATION_URL_TEMPLATE = "https://oto.com.vn/mua-ban-xe/p{}"
