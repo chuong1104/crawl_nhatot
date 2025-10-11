@@ -62,35 +62,33 @@ Dự án này sử dụng Python và Playwright để tự động thu thập th
 
 ## Sử dụng
 
-Quy trình cào và xử lý dữ liệu bao gồm 3 bước:
-
-### Bước 1: Thu thập tất cả URL
-Chạy script này để quét trang web và tạo ra file `final_aidxc_urls.csv` chứa tất cả các link tin đăng.
-```bash
-python collect_urls.py
-```
-*File `final_aidxc_urls.csv` sẽ được tạo ra ở thư mục gốc.*
-
-### Bước 2: Cào dữ liệu thô từ URL
-Sau khi đã có file URL, chạy script này để bắt đầu cào thông tin chi tiết. Dữ liệu cào về sẽ ở dạng thô (raw), chưa qua xử lý.
+### Chạy cơ bản
 ```bash
 python main.py
 ```
-*Kết quả thô sẽ được lưu vào file `results/csv/oto2_com_vn_cars.csv`.*
+*Mặc định sẽ thử tối đa 500 lần nhấn "Hiển thị thêm" hoặc cho đến khi hết dữ liệu*
 
-### Bước 3: Làm sạch và chuẩn hóa dữ liệu
-Chạy script này để đọc file dữ liệu thô, áp dụng các quy tắc làm sạch, chuẩn hóa và lưu ra một file mới.
+### Chạy với số lần load more tùy chỉnh
 ```bash
-python preprocess_data.py
+# Chạy với tối đa 5 lần nhấn "Hiển thị thêm"
+python main.py 5
+
+# Chạy với tối đa 20 lần nhấn "Hiển thị thêm" 
+python main.py 20
+
+# Chạy với tối đa 100 lần (thu thập nhiều dữ liệu)
+python main.py 100
 ```
-*Kết quả cuối cùng, sạch và đã được chuẩn hóa, sẽ được lưu vào file `results/csv/oto_cars_cleaned.csv`.*
+
+### Cấu trúc tham số
+```bash
+python main.py [số_lần_load_more_tối_đa]
+```
 
 ## Cấu trúc dự án
 ```
 crawl_nhatot/
-├── collect_urls.py         # Bước 1: Script để thu thập URL
-├── main.py                 # Bước 2: Script để cào dữ liệu thô
-├── preprocess_data.py      # Bước 3: Script để làm sạch và chuẩn hóa dữ liệu
+├── main.py                 # Entry point chính
 ├── base_scraper.py         # Lớp cơ sở cho scraper
 ├── requirements.txt        # Danh sách dependencies
 ├── README.md               # Tài liệu này
@@ -115,25 +113,24 @@ crawl_nhatot/
 
 ## Định dạng dữ liệu đầu ra
 
-Dự án sẽ tạo ra hai file CSV chính:
+File CSV kết quả có các cột sau:
 
-1.  **`oto2_com_vn_cars.csv`**: Chứa dữ liệu **thô** được cào trực tiếp từ website.
-2.  **`oto_cars_cleaned.csv`**: Chứa dữ liệu đã được **làm sạch và chuẩn hóa**, sẵn sàng cho việc phân tích.
+| Cột | Kiểu dữ liệu | Mô tả | Ví dụ |
+|-----|--------------|-------|-------|
+| Tên xe | String | Tên đầy đủ của xe | "Toyota Camry 2.5Q" |
+| Giá tiền | Number | Giá xe (số nguyên, VND) | 1250000000 |
+| Ngày đăng bài | String | Ngày đăng tin | "15/09/2025" |
+| Năm sản xuất | Number | Năm sản xuất xe | 2020 |
+| Nhiên liệu | String | Loại nhiên liệu | "Xăng" |
+| Kiểu dáng | String | Kiểu dáng xe | "Sedan" |
+| Tình trạng | String | Tình trạng xe | "Xe cũ" |
+| Số km đã đi | Number | Số km đã đi | 25000 |
+| Hộp số | String | Loại hộp số | "Số tự động" |
+| Xuất xứ | String | Xuất xứ | "Nhập khẩu" |
+| Địa điểm | String | Địa điểm bán xe | "Hà Nội" |
+| Mô tả | String | Mô tả chi tiết | "Xe gia đình sử dụng..." |
+| URL | String | URL gốc | "https://oto.com.vn/..." |
 
-Định dạng file cuối cùng (`oto_cars_cleaned.csv`) có các cột sau:
 
-| Cột           | Kiểu dữ liệu | Mô tả                       | Ví dụ                 |
-|---------------|--------------|-----------------------------|-----------------------|
-| Mã bản tin    | String       | Mã định danh của tin đăng   | "23361891"            |
-| Tên xe        | String       | Tên đầy đủ của xe           | "Toyota Camry 2.5Q"   |
-| Giá tiền      | Number       | Giá xe (số nguyên, VND)     | 1250000000            |
-| Ngày đăng bài | String       | Ngày đăng tin               | "15/09/2025"          |
-| Năm sản xuất  | Number       | Năm sản xuất xe             | 2020                  |
-| Nhiên liệu    | String       | Loại nhiên liệu             | "Xăng"                |
-| Kiểu dáng     | String       | Kiểu dáng xe                | "Sedan"               |
-| Tình trạng    | String       | Tình trạng xe               | "Xe cũ"               |
-| Số km đã đi   | Number       | Số km đã đi                 | 25000                 |
-| Hộp số        | String       | Loại hộp số                 | "Số tự động"          |
-| Xuất xứ       | String       | Xuất xứ                     | "Nhập khẩu"           |
-| Địa điểm      | String       | Địa điểm bán xe             | "Hà Nội"              |
-| URL           | String       | URL gốc của tin đăng        | "https://oto.com.vn/..." |
+- cào toàn bộ link rồi xử lý trùng 1 lần cuối cùng
+- chạy cùng lúc nhiều trang, chỉ lấy ra hmtl
