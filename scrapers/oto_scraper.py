@@ -2,12 +2,11 @@ import asyncio
 import re
 import pandas as pd
 from base_scraper import BaseScraper
-from utils import normalize_car_data, extract_price, extract_km, extract_year, clean_text, clean_car_name
 
 class OtoComVnScraper(BaseScraper):
-    def __init__(self, config, max_pages):
-        super().__init__(config, max_pages)
-        self.input_file = "final_aidxc_urls.csv" # File chứa URL đầu vào
+    def __init__(self, config):
+        super().__init__(config)
+        self.input_file = "car_detail_urls.txt" # File chứa URL đầu vào
         self.concurrent_scrapes = 15 # Số lượng URL cào đồng thời
 
     def extract_ad_id_from_url(self, url):
@@ -73,68 +72,53 @@ class OtoComVnScraper(BaseScraper):
             await self.save_partial_data("batch_final")
 
     async def extract_car_detail(self, page):
-        """Trích xuất thông tin chi tiết của xe từ trang chi tiết."""
+        """Trích xuất thông tin chi tiết của xe từ trang chi tiết (dữ liệu thô)."""
         car_info = {}
         current_url = page.url
         car_info['ad_id'] = self.extract_ad_id_from_url(current_url) or 'N/A'
 
         # Lấy tiêu đề
         title_elem = await page.query_selector(self.config.TITLE_SELECTORS[0])
-        car_info['title'] = clean_text(await title_elem.text_content()) if title_elem else 'N/A'
+        car_info['title'] = (await title_elem.text_content()).strip() if title_elem else 'N/A'
 
-        # Lấy giá
+        # Lấy giá (dạng thô)
         price_elem = await page.query_selector(self.config.PRICE_SELECTORS[0])
-        car_info['price'] = extract_price(await price_elem.text_content()) if price_elem else None
+        car_info['price'] = (await price_elem.text_content()).strip() if price_elem else 'N/A'
 
-        # Lấy ngày đăng
+        # Lấy ngày đăng (dạng thô)
         date_elem = await page.query_selector(self.config.DATE_POSTED_SELECTORS[0])
-        car_info['date_posted'] = clean_text(await date_elem.text_content()) if date_elem else 'N/A'
+        car_info['date_posted'] = (await date_elem.text_content()).strip() if date_elem else 'N/A'
 
-        # Lấy các thông tin chi tiết khác
+        # Lấy các thông tin chi tiết khác (dạng thô)
         for key, selector in self.config.DETAIL_SELECTORS.items():
             elem = await page.query_selector(selector)
             if elem:
-                text = await elem.text_content()
-                value = text.split(':')[-1].strip() if ':' in text else text.strip()
-                car_info[key] = clean_text(value) if value else 'N/A'
+                # Lấy toàn bộ text_content của thẻ li, sau đó loại bỏ nhãn ở đầu
+                full_text = await elem.text_content()
+                # Tách văn bản bằng ký tự xuống dòng hoặc dấu hai chấm để lấy giá trị
+                parts = re.split(r':|\n', full_text, maxsplit=1)
+                value = parts[-1].strip() if len(parts) > 1 else full_text.strip()
+                car_info[key] = value if value else 'N/A'
             else:
                 car_info[key] = 'N/A'
 
-        return self.normalize_car_data_simple(car_info)
-
-    def normalize_car_data_simple(self, car_data):
-        """Chuẩn hóa dữ liệu thô thành định dạng sạch."""
-        normalized = car_data.copy()
-        
-        if 'title' in normalized:
-            normalized['title'] = clean_car_name(normalized['title'])
-        
-        if 'price' in normalized and normalized['price'] is not None:
-            try:
-                normalized['price'] = int(normalized['price'])
-            except (ValueError, TypeError):
-                normalized['price'] = None
-        
-        if 'km_driven' in normalized and normalized['km_driven'] != 'N/A':
-            normalized['km_driven'] = extract_km(normalized['km_driven'])
-        
-        if 'manufacture_year' in normalized and normalized['manufacture_year'] != 'N/A':
-            normalized['manufacture_year'] = extract_year(normalized['manufacture_year'])
-        
-        return normalized
+        return car_info
 
     async def scrape(self):
-        """Ghi đè phương thức scrape để đọc URL từ file CSV và cào dữ liệu song song."""
+        """Ghi đè phương thức scrape để đọc URL từ file và cào dữ liệu song song."""
         print(f"Bắt đầu scraping dữ liệu từ file {self.input_file}...")
         try:
-            df = pd.read_csv(self.input_file)
-            car_links = df['final_url'].dropna().unique().tolist()
+            # Đọc file .txt, mỗi dòng là một URL
+            with open(self.input_file, 'r', encoding='utf-8') as f:
+                car_links = [line.strip() for line in f if line.strip()]
+            # Loại bỏ các URL trùng lặp
+            car_links = sorted(list(set(car_links)))
             print(f"Tìm thấy {len(car_links)} URL duy nhất để cào.")
         except FileNotFoundError:
-            print(f"Lỗi: Không tìm thấy file {self.input_file}. Hãy chạy 'python collect_urls.py' trước.")
+            print(f"Lỗi: Không tìm thấy file {self.input_file}. Hãy chạy script để thu thập URL chi tiết trước.")
             return
         except Exception as e:
-            print(f"Lỗi khi đọc file CSV: {e}")
+            print(f"Lỗi khi đọc file: {e}")
             return
 
         if not car_links:

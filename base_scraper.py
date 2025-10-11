@@ -2,15 +2,13 @@ import asyncio
 import pandas as pd
 from playwright.async_api import async_playwright
 import time
-import random
 import os
 from utils import create_directory, clean_filename
 
 class BaseScraper:
-    def __init__(self, config, max_pages):
+    def __init__(self, config):
         self.config = config
         self.data = []
-        self.max_pages = max_pages # Giữ lại để tương thích, không còn nhiều ý nghĩa
         
     async def setup_browser(self):
         """Thiết lập trình duyệt với các tùy chọn cần thiết"""
@@ -64,61 +62,33 @@ class BaseScraper:
             print(f"Đã lưu thông tin lỗi: {screenshot_path}")
         except Exception as e:
             print(f"Không thể lưu thông tin lỗi: {e}")
+
     async def save_partial_data(self, batch_name):
-        """Lưu dữ liệu tạm thời."""
+        """Lưu dữ liệu thô tạm thời mà không đổi tên cột."""
         if not self.data:
             return
         print(f"Lưu dữ liệu tạm thời cho batch '{batch_name}'...")
         df = pd.DataFrame(self.data)
-        
-        column_mapping = {
-            'ad_id': 'Mã bản tin', 'title': 'Tên xe', 'price': 'Giá tiền',
-            'date_posted': 'Ngày đăng bài', 'manufacture_year': 'Năm sản xuất',
-            'fuel': 'Nhiên liệu', 'body_style': 'Kiểu dáng', 'condition': 'Tình trạng',
-            'km_driven': 'Số km đã đi', 'transmission': 'Hộp số', 'origin': 'Xuất xứ',
-            'location': 'Địa điểm', 'url': 'URL'
-        }
-        
-        available_cols = {k: v for k, v in column_mapping.items() if k in df.columns}
-        df = df[list(available_cols.keys())].rename(columns=available_cols)
-        
         df.to_csv(self.config.OUTPUT_FILE_PARTIAL, index=False, encoding='utf-8-sig')
         print(f"Đã lưu {len(self.data)} bản ghi vào file tạm: {self.config.OUTPUT_FILE_PARTIAL}")
 
     async def save_final_data(self):
-        """Lưu dữ liệu cuối cùng."""
+        """Lưu dữ liệu thô cuối cùng, loại bỏ trùng lặp."""
         if not self.data:
             print("Không có dữ liệu để lưu.")
             return False
             
         df = pd.DataFrame(self.data)
-        column_mapping = {
-            'ad_id': 'Mã bản tin', 
-            'title': 'Tên xe', 
-            'price': 'Giá tiền',
-            'date_posted': 'Ngày đăng bài', 
-            'manufacture_year': 'Năm sản xuất',
-            'fuel': 'Nhiên liệu', 
-            'body_style': 'Kiểu dáng', 
-            'condition': 'Tình trạng',
-            'km_driven': 'Số km đã đi', 
-            'transmission': 'Hộp số', 
-            'origin': 'Xuất xứ',
-            'location': 'Địa điểm', 
-            'url': 'URL'
-        }
         
-        available_cols = {k: v for k, v in column_mapping.items() if k in df.columns}
-        df = df[list(available_cols.keys())].rename(columns=available_cols)
-        
-        if 'Mã bản tin' in df.columns:
-            df = df.drop_duplicates(subset=['Mã bản tin'], keep='first')
+        # Loại bỏ trùng lặp dựa trên 'ad_id' nếu cột này tồn tại
+        if 'ad_id' in df.columns:
+            df = df.drop_duplicates(subset=['ad_id'], keep='first')
             print(f"Đã loại bỏ các bản ghi trùng lặp, còn lại {len(df)} bản ghi.")
         
         df.to_csv(self.config.OUTPUT_FILE, index=False, encoding='utf-8-sig')
         print(f"Đã lưu {len(df)} bản ghi vào file {self.config.OUTPUT_FILE}")
         
-        print("\n5 bản ghi đầu tiên:")
+        print("\n5 bản ghi thô đầu tiên:")
         print(df.head().to_string(index=False))
         return True
     

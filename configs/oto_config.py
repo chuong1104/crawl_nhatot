@@ -105,3 +105,18 @@ class OtoComVnConfig:
     ]
     
     PAGINATION_URL_TEMPLATE = "https://oto.com.vn/mua-ban-xe/p{}"
+
+    # --- Cấu hình cho URL Collector (collect_urls.py) ---
+    URL_COLLECTOR_OUTPUT_FILE = "final_aidxc_urls.csv"
+    URL_COLLECTOR_MAX_PAGES = 1000  # Số trang danh sách tối đa để quét
+    URL_COLLECTOR_CONCURRENCY = 10 # Số trang quét đồng thời
+    URL_COLLECTOR_STOP_AFTER_NO_NEW_URLS = 500 # Dừng nếu không có URL mới sau N trang liên tiếp
+    
+    # Selector để tìm các link trong box chính từ trang 11 trở đi
+    URL_COLLECTOR_FOCUSED_SELECTOR = '#box-list-car .item-car a'
+    
+    # Selector để tìm các link chi tiết (chứa aidxc)
+    URL_COLLECTOR_TARGET_SELECTOR = 'a[href*="aidxc"]'
+    
+    # Các loại tài nguyên sẽ bị chặn để tăng tốc độ
+    URL_COLLECTOR_BLOCK_RESOURCE_TYPES = ['image', 'stylesheet', 'font', 'media']

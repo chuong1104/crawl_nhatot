@@ -37,8 +37,8 @@ async def main():
     
     print("Bắt đầu quá trình cào dữ liệu từ file CSV...")
 
-    # Sửa lỗi bằng cách thêm tham số max_pages=0
-    scraper = OtoComVnScraper(config, max_pages=0)
+    # Bỏ tham số max_pages không cần thiết
+    scraper = OtoComVnScraper(config)
     await scraper.scrape()
 
 if __name__ == "__main__":

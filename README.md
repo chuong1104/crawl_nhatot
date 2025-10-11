@@ -4,38 +4,28 @@ Dự án web scraping thu thập dữ liệu xe ô tô từ trang web [oto.com.v
 
 ## Mô tả dự án
 
-Dự án này sử dụng Python và Playwright để tự động thu thập thông tin xe ô tô từ oto.com.vn. Scraper có khả năng:
+Dự án này sử dụng Python và Playwright để tự động thu thập thông tin xe ô tô từ oto.com.vn. Quy trình được chia thành hai giai đoạn chính để tối ưu hiệu suất:
 
-- **Tự động load more**: Xử lý nút "Hiển thị thêm" để tải tất cả dữ liệu mà không cần phân trang truyền thống
-- **Phát hiện dữ liệu trùng lặp**: Dừng tự động khi không còn dữ liệu mới sau 3 lần liên tiếp
-- **Trích xuất chi tiết**: Truy cập từng trang chi tiết xe để lấy đầy đủ thông tin
-- **Chống trùng lặp**: Theo dõi URL đã xử lý để tránh thu thập dữ liệu trùng lặp
-- **Xử lý lỗi thông minh**: Auto-retry với 3 lần thử lại cho mỗi trang
-- **Lưu dữ liệu an toàn**: Xuất CSV với encoding UTF-8-Sig hỗ trợ tiếng Việt, lưu tạm mỗi 10 xe
+1.  **Thu thập URL (`collect_urls.py`)**: Quét song song hàng trăm trang danh sách với tốc độ cao để thu thập tất cả các URL của các tin đăng chi tiết.
+2.  **Cào dữ liệu chi tiết (`main.py`)**: Đọc danh sách URL đã thu thập và cào dữ liệu chi tiết từ mỗi trang một cách song song.
 
 ## Tính năng
 
 ### Dữ liệu thu thập được
-- **Thông tin cơ bản**: Tên xe, giá tiền, ngày đăng bài
+- **Thông tin cơ bản**: Mã bản tin, tên xe, giá tiền, ngày đăng bài
 - **Thông số kỹ thuật**: Năm sản xuất, nhiên liệu, kiểu dáng, tình trạng
 - **Thông số vận hành**: Số km đã đi, hộp số
-- **Thông tin khác**: Xuất xứ, địa điểm bán, mô tả, URL gốc
+- **Thông tin khác**: Xuất xứ, địa điểm bán, URL gốc
 
 ### Tính năng kỹ thuật nâng cao
-- **Smart Load More**: Tự động dừng khi phát hiện không còn dữ liệu mới (3 lần liên tiếp)
-- **URL Deduplication**: Sử dụng set để theo dõi URL đã xử lý, tránh trùng lặp
-- **Asynchronous Processing**: Sử dụng asyncio để xử lý đồng thời, tăng tốc độ scraping
-- **Stealth Mode**: Sử dụng Playwright với chế độ ẩn danh để tránh bị chặn
-- **Intelligent Retry**: Tự động thử lại 3 lần khi kết nối thất bại với delay tăng dần
-- **Batch Saving**: Lưu dữ liệu tạm thời mỗi 10 xe để tránh mất dữ liệu
-- **Error Recovery**: Tiếp tục scraping ngay cả khi một số trang bị lỗi
-- **Debug Tools**: Chụp ảnh màn hình và lưu HTML để debug khi có lỗi
-
-### Cải tiến về hiệu suất
-- **Efficient URL Collection**: Thu thập tất cả URL trước, sau đó xử lý chi tiết
-- **Memory Optimization**: Sử dụng set() cho URL tracking thay vì list
-- **Network Optimization**: Chờ 'networkidle' để đảm bảo trang tải hoàn toàn
-- **Resource Management**: Tự động đóng tab sau mỗi lần xử lý để tiết kiệm bộ nhớ
+- **High-Speed URL Collection**: Quét song song nhiều trang danh sách và chặn các tài nguyên không cần thiết (CSS, ảnh, font) để thu thập URL cực nhanh.
+- **Parallel Scraping**: Cào dữ liệu từ nhiều trang chi tiết cùng lúc để tăng tốc độ.
+- **URL Deduplication**: Tự động loại bỏ các URL trùng lặp để đảm bảo mỗi tin đăng chỉ được xử lý một lần.
+- **Stealth Mode**: Sử dụng Playwright với các tùy chỉnh để tránh bị phát hiện và chặn.
+- **Intelligent Retry**: Tự động thử lại khi kết nối thất bại.
+- **Batch Saving**: Lưu dữ liệu tạm thời để tránh mất mát khi xử lý số lượng lớn.
+- **Error Recovery**: Tiếp tục scraping ngay cả khi một số trang bị lỗi.
+- **Debug Tools**: Chụp ảnh màn hình và lưu HTML để debug khi có lỗi.
 
 ## Cài đặt
 
@@ -45,101 +35,105 @@ Dự án này sử dụng Python và Playwright để tự động thu thập th
 
 ### Các bước cài đặt
 
-1. **Clone repository**
-```bash
-git clone <repository-url>
-cd crawl_nhatot
-```
+1.  **Clone repository**
+    ```bash
+    git clone <repository-url>
+    cd crawl_nhatot
+    ```
 
-2. **Tạo và kích hoạt môi trường ảo**
-```bash
-python -m venv .venv
-# Trên Windows:
-.venv\Scripts\activate
-# Trên macOS/Linux:
-source .venv/bin/activate
-```
+2.  **Tạo và kích hoạt môi trường ảo**
+    ```bash
+    python -m venv .venv
+    # Trên Windows:
+    .venv\Scripts\activate
+    # Trên macOS/Linux:
+    source .venv/bin/activate
+    ```
 
-3. **Cài đặt dependencies**
-```bash
-pip install -r requirements.txt
-```
+3.  **Cài đặt dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-4. **Cài đặt trình duyệt cho Playwright**
-```bash
-python -m playwright install chromium
-```
+4.  **Cài đặt trình duyệt cho Playwright**
+    ```bash
+    python -m playwright install chromium
+    ```
 
 ## Sử dụng
 
-### Chạy cơ bản
+Quy trình cào và xử lý dữ liệu bao gồm 3 bước:
+
+### Bước 1: Thu thập tất cả URL
+Chạy script này để quét trang web và tạo ra file `final_aidxc_urls.csv` chứa tất cả các link tin đăng.
+```bash
+python collect_urls.py
+```
+*File `final_aidxc_urls.csv` sẽ được tạo ra ở thư mục gốc.*
+
+### Bước 2: Cào dữ liệu thô từ URL
+Sau khi đã có file URL, chạy script này để bắt đầu cào thông tin chi tiết. Dữ liệu cào về sẽ ở dạng thô (raw), chưa qua xử lý.
 ```bash
 python main.py
 ```
-*Mặc định sẽ thử tối đa 500 lần nhấn "Hiển thị thêm" hoặc cho đến khi hết dữ liệu*
+*Kết quả thô sẽ được lưu vào file `results/csv/oto2_com_vn_cars.csv`.*
 
-### Chạy với số lần load more tùy chỉnh
+### Bước 3: Làm sạch và chuẩn hóa dữ liệu
+Chạy script này để đọc file dữ liệu thô, áp dụng các quy tắc làm sạch, chuẩn hóa và lưu ra một file mới.
 ```bash
-# Chạy với tối đa 5 lần nhấn "Hiển thị thêm"
-python main.py 5
-
-# Chạy với tối đa 20 lần nhấn "Hiển thị thêm" 
-python main.py 20
-
-# Chạy với tối đa 100 lần (thu thập nhiều dữ liệu)
-python main.py 100
+python preprocess_data.py
 ```
-
-### Cấu trúc tham số
-```bash
-python main.py [số_lần_load_more_tối_đa]
-```
+*Kết quả cuối cùng, sạch và đã được chuẩn hóa, sẽ được lưu vào file `results/csv/oto_cars_cleaned.csv`.*
 
 ## Cấu trúc dự án
 ```
 crawl_nhatot/
-├── main.py                 # Entry point chính
+├── collect_urls.py         # Bước 1: Script để thu thập URL
+├── main.py                 # Bước 2: Script để cào dữ liệu thô
+├── preprocess_data.py      # Bước 3: Script để làm sạch và chuẩn hóa dữ liệu
 ├── base_scraper.py         # Lớp cơ sở cho scraper
 ├── requirements.txt        # Danh sách dependencies
-├── README.md              # Tài liệu này
+├── README.md               # Tài liệu này
 ├── configs/
 │   ├── __init__.py
-│   └── oto_config.py       # Cấu hình selectors và timeout
+│   └── oto_config.py       # Cấu hình selectors, URL, và các tham số
 ├── scrapers/
 │   ├── __init__.py
-│   └── oto_scraper.py      # Scraper với logic load more thông minh
+│   └── oto_scraper.py      # Logic cào dữ liệu chi tiết
 ├── utils/
 │   ├── __init__.py
-│   └── scraper_utils.py    # Các hàm tiện ích xử lý dữ liệu
-└── results/               # Thư mục kết quả (tự động tạo)
-    ├── csv/               # File CSV chứa dữ liệu
-    │   ├── oto2_com_vn_cars.csv         # File chính
+│   └── scraper_utils.py    # Các hàm tiện ích (làm sạch, chuẩn hóa)
+└── results/                # Thư mục kết quả (tự động tạo)
+    ├── csv/                # File CSV chứa dữ liệu
+    │   ├── oto2_com_vn_cars.csv         # File dữ liệu thô
+    │   ├── oto_cars_cleaned.csv         # File dữ liệu đã làm sạch
     │   └── oto2_com_vn_cars_partial.csv # File backup tạm thời
-    ├── screenshots/       # Ảnh chụp màn hình debug
+    ├── screenshots/        # Ảnh chụp màn hình debug
     ├── logs/              # File log HTML
     └── errors/            # Thông tin lỗi và debug
 ```
 
 ## Định dạng dữ liệu đầu ra
 
-File CSV kết quả có các cột sau:
+Dự án sẽ tạo ra hai file CSV chính:
 
-| Cột | Kiểu dữ liệu | Mô tả | Ví dụ |
-|-----|--------------|-------|-------|
-| Tên xe | String | Tên đầy đủ của xe | "Toyota Camry 2.5Q" |
-| Giá tiền | Number | Giá xe (số nguyên, VND) | 1250000000 |
-| Ngày đăng bài | String | Ngày đăng tin | "15/09/2025" |
-| Năm sản xuất | Number | Năm sản xuất xe | 2020 |
-| Nhiên liệu | String | Loại nhiên liệu | "Xăng" |
-| Kiểu dáng | String | Kiểu dáng xe | "Sedan" |
-| Tình trạng | String | Tình trạng xe | "Xe cũ" |
-| Số km đã đi | Number | Số km đã đi | 25000 |
-| Hộp số | String | Loại hộp số | "Số tự động" |
-| Xuất xứ | String | Xuất xứ | "Nhập khẩu" |
-| Địa điểm | String | Địa điểm bán xe | "Hà Nội" |
-| Mô tả | String | Mô tả chi tiết | "Xe gia đình sử dụng..." |
-| URL | String | URL gốc | "https://oto.com.vn/..." |
+1.  **`oto2_com_vn_cars.csv`**: Chứa dữ liệu **thô** được cào trực tiếp từ website.
+2.  **`oto_cars_cleaned.csv`**: Chứa dữ liệu đã được **làm sạch và chuẩn hóa**, sẵn sàng cho việc phân tích.
 
+Định dạng file cuối cùng (`oto_cars_cleaned.csv`) có các cột sau:
 
-- cào toàn bộ link rồi xử lý trùng 1 lần cuối cùng
-- chạy cùng lúc nhiều trang, chỉ lấy ra hmtl
+| Cột           | Kiểu dữ liệu | Mô tả                       | Ví dụ                 |
+|---------------|--------------|-----------------------------|-----------------------|
+| Mã bản tin    | String       | Mã định danh của tin đăng   | "23361891"            |
+| Tên xe        | String       | Tên đầy đủ của xe           | "Toyota Camry 2.5Q"   |
+| Giá tiền      | Number       | Giá xe (số nguyên, VND)     | 1250000000            |
+| Ngày đăng bài | String       | Ngày đăng tin               | "15/09/2025"          |
+| Năm sản xuất  | Number       | Năm sản xuất xe             | 2020                  |
+| Nhiên liệu    | String       | Loại nhiên liệu             | "Xăng"                |
+| Kiểu dáng     | String       | Kiểu dáng xe                | "Sedan"               |
+| Tình trạng    | String       | Tình trạng xe               | "Xe cũ"               |
+| Số km đã đi   | Number       | Số km đã đi                 | 25000                 |
+| Hộp số        | String       | Loại hộp số                 | "Số tự động"          |
+| Xuất xứ       | String       | Xuất xứ                     | "Nhập khẩu"           |
+| Địa điểm      | String       | Địa điểm bán xe             | "Hà Nội"              |
+| URL           | String       | URL gốc của tin đăng        | "https://oto.com.vn/..." |
