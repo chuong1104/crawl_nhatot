@@ -4,10 +4,11 @@ Dự án web scraping thu thập dữ liệu xe ô tô từ trang web [oto.com.v
 
 ## Mô tả dự án
 
-Dự án này sử dụng Python và Playwright để tự động thu thập thông tin xe ô tô từ oto.com.vn. Quy trình được chia thành hai giai đoạn chính để tối ưu hiệu suất:
+Dự án này sử dụng Python và Playwright để tự động thu thập thông tin xe ô tô từ oto.com.vn. Quy trình được chia thành ba giai đoạn chính để tối ưu hiệu suất và độ chính xác:
 
-1.  **Thu thập URL (`collect_urls.py`)**: Quét song song hàng trăm trang danh sách với tốc độ cao để thu thập tất cả các URL của các tin đăng chi tiết.
-2.  **Cào dữ liệu chi tiết (`main.py`)**: Đọc danh sách URL đã thu thập và cào dữ liệu chi tiết từ mỗi trang một cách song song.
+1.  **Thu thập URL Hãng xe & Model (`Craw_Hang_Xe.py`)**: Tự động truy cập trang chủ, lấy URL của tất cả các danh mục hãng xe và model xe. Kết quả được lưu vào `car_model_urls.txt`.
+2.  **Thu thập URL Chi tiết (`Craw_Details.py`)**: Đọc danh sách URL danh mục, sau đó quét song song qua hàng nghìn trang con để thu thập tất cả URL của các tin đăng chi tiết. Kết quả được lưu vào `car_detail_urls.txt`.
+3.  **Cào dữ liệu chi tiết (`main.py`)**: Đọc danh sách URL tin đăng đã thu thập và cào dữ liệu chi tiết từ mỗi trang một cách song song, với tốc độ cao.
 
 ## Tính năng
 
@@ -18,9 +19,10 @@ Dự án này sử dụng Python và Playwright để tự động thu thập th
 - **Thông tin khác**: Xuất xứ, địa điểm bán, URL gốc
 
 ### Tính năng kỹ thuật nâng cao
-- **High-Speed URL Collection**: Quét song song nhiều trang danh sách và chặn các tài nguyên không cần thiết (CSS, ảnh, font) để thu thập URL cực nhanh.
-- **Parallel Scraping**: Cào dữ liệu từ nhiều trang chi tiết cùng lúc để tăng tốc độ.
-- **URL Deduplication**: Tự động loại bỏ các URL trùng lặp để đảm bảo mỗi tin đăng chỉ được xử lý một lần.
+- **Multi-Stage URL Collection**: Quy trình thu thập URL 2 bước đảm bảo lấy được tối đa số lượng tin đăng trên toàn bộ trang web.
+- **High-Speed Parallel Scraping**: Cào dữ liệu từ nhiều trang danh mục và trang chi tiết cùng lúc để tăng tốc độ.
+- **Resource Blocking**: Chặn các tài nguyên không cần thiết (CSS, ảnh, font) để thu thập URL cực nhanh.
+- **URL Deduplication**: Tự động loại bỏ các URL trùng lặp ở mỗi giai đoạn để đảm bảo dữ liệu là duy nhất.
 - **Stealth Mode**: Sử dụng Playwright với các tùy chỉnh để tránh bị phát hiện và chặn.
 - **Intelligent Retry**: Tự động thử lại khi kết nối thất bại.
 - **Batch Saving**: Lưu dữ liệu tạm thời để tránh mất mát khi xử lý số lượng lớn.
@@ -62,75 +64,69 @@ Dự án này sử dụng Python và Playwright để tự động thu thập th
 
 ## Sử dụng
 
-### Chạy cơ bản
+Chạy các script theo đúng thứ tự sau:
+
+### Bước 1: Thu thập URL các hãng xe và model
+Chạy script này để lấy danh sách tất cả các trang danh mục xe.
+```bash
+python Craw_Hang_Xe.py
+```
+- **Đầu ra**: File `car_model_urls.txt` chứa URL của từng model xe.
+
+### Bước 2: Thu thập URL chi tiết của từng tin đăng
+Script này sẽ đọc file `car_model_urls.txt`, duyệt qua từng danh mục và các trang con để lấy URL của tất cả các tin đăng.
+```bash
+python Craw_Details.py
+```
+- **Đầu ra**: File `car_detail_urls.txt` chứa hàng chục nghìn URL chi tiết, sẵn sàng cho việc cào dữ liệu.
+
+### Bước 3: Cào dữ liệu chi tiết từ các URL đã thu thập
+Đây là bước cuối cùng, script sẽ đọc file `car_detail_urls.txt` và tiến hành cào dữ liệu song song.
 ```bash
 python main.py
 ```
-*Mặc định sẽ thử tối đa 500 lần nhấn "Hiển thị thêm" hoặc cho đến khi hết dữ liệu*
-
-### Chạy với số lần load more tùy chỉnh
-```bash
-# Chạy với tối đa 5 lần nhấn "Hiển thị thêm"
-python main.py 5
-
-# Chạy với tối đa 20 lần nhấn "Hiển thị thêm" 
-python main.py 20
-
-# Chạy với tối đa 100 lần (thu thập nhiều dữ liệu)
-python main.py 100
-```
-
-### Cấu trúc tham số
-```bash
-python main.py [số_lần_load_more_tối_đa]
-```
+- **Đầu ra**: File `results/csv/oto2_com_vn_cars.csv` chứa toàn bộ dữ liệu thô đã cào được.
 
 ## Cấu trúc dự án
 ```
 crawl_nhatot/
-├── main.py                 # Entry point chính
+├── main.py                 # Giai đoạn 3: Chạy cào dữ liệu chi tiết
+├── Craw_Hang_Xe.py         # Giai đoạn 1: Thu thập URL hãng xe/model
+├── Craw_Details.py         # Giai đoạn 2: Thu thập URL tin đăng chi tiết
 ├── base_scraper.py         # Lớp cơ sở cho scraper
 ├── requirements.txt        # Danh sách dependencies
 ├── README.md               # Tài liệu này
+├── car_model_urls.txt      # Output của Giai đoạn 1
+├── car_detail_urls.txt     # Output của Giai đoạn 2
 ├── configs/
-│   ├── __init__.py
 │   └── oto_config.py       # Cấu hình selectors, URL, và các tham số
 ├── scrapers/
-│   ├── __init__.py
-│   └── oto_scraper.py      # Logic cào dữ liệu chi tiết
+│   └── oto_scraper.py      # Logic cào dữ liệu chi tiết (sử dụng trong main.py)
 ├── utils/
-│   ├── __init__.py
-│   └── scraper_utils.py    # Các hàm tiện ích (làm sạch, chuẩn hóa)
+│   └── scraper_utils.py    # Các hàm tiện ích
 └── results/                # Thư mục kết quả (tự động tạo)
     ├── csv/                # File CSV chứa dữ liệu
-    │   ├── oto2_com_vn_cars.csv         # File dữ liệu thô
-    │   ├── oto_cars_cleaned.csv         # File dữ liệu đã làm sạch
-    │   └── oto2_com_vn_cars_partial.csv # File backup tạm thời
     ├── screenshots/        # Ảnh chụp màn hình debug
-    ├── logs/              # File log HTML
-    └── errors/            # Thông tin lỗi và debug
+    ├── logs/               # File log HTML
+    └── errors/             # Thông tin lỗi và debug
 ```
 
 ## Định dạng dữ liệu đầu ra
 
-File CSV kết quả có các cột sau:
+File CSV kết quả (`oto2_com_vn_cars.csv`) có các cột sau:
 
 | Cột | Kiểu dữ liệu | Mô tả | Ví dụ |
 |-----|--------------|-------|-------|
-| Tên xe | String | Tên đầy đủ của xe | "Toyota Camry 2.5Q" |
-| Giá tiền | Number | Giá xe (số nguyên, VND) | 1250000000 |
-| Ngày đăng bài | String | Ngày đăng tin | "15/09/2025" |
-| Năm sản xuất | Number | Năm sản xuất xe | 2020 |
-| Nhiên liệu | String | Loại nhiên liệu | "Xăng" |
-| Kiểu dáng | String | Kiểu dáng xe | "Sedan" |
-| Tình trạng | String | Tình trạng xe | "Xe cũ" |
-| Số km đã đi | Number | Số km đã đi | 25000 |
-| Hộp số | String | Loại hộp số | "Số tự động" |
-| Xuất xứ | String | Xuất xứ | "Nhập khẩu" |
-| Địa điểm | String | Địa điểm bán xe | "Hà Nội" |
-| Mô tả | String | Mô tả chi tiết | "Xe gia đình sử dụng..." |
-| URL | String | URL gốc | "https://oto.com.vn/..." |
-
-
-- cào toàn bộ link rồi xử lý trùng 1 lần cuối cùng
-- chạy cùng lúc nhiều trang, chỉ lấy ra hmtl
+| ad_id | String | Mã tin đăng duy nhất | "23372753" |
+| title | String | Tên đầy đủ của xe | "Toyota Camry 2.5Q" |
+| price | String | Giá xe (dạng thô) | "1 tỉ 250 triệu" |
+| date_posted | String | Ngày đăng tin | "13/10/2025" |
+| manufacture_year | String | Năm sản xuất xe | "2020" |
+| fuel | String | Loại nhiên liệu | "Xăng" |
+| body_style | String | Kiểu dáng xe | "Sedan" |
+| condition | String | Tình trạng xe | "Xe cũ" |
+| km_driven | String | Số km đã đi (dạng thô) | "25.000 km" |
+| transmission | String | Loại hộp số | "Số tự động" |
+| origin | String | Xuất xứ | "Nhập khẩu" |
+| location | String | Địa điểm bán xe | "Hà Nội" |
+| url | String | URL gốc của tin đăng | "https://oto.com.vn/..." |
