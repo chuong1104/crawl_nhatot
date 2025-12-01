@@ -4,7 +4,7 @@ Dự án web scraping thu thập dữ liệu xe ô tô từ trang web [oto.com.v
 
 ## Mô tả dự án
 
-Dự án này sử dụng Python và Playwright để tự động thu thập thông tin xe ô tô từ oto.com.vn. Quy trình được chia thành ba giai đoạn chính để tối ưu hiệu suất và độ chính xác:
+Dự án này sử dụng Python và Playwright để tự động thu thập thông tin xe ô tô từ oto.com.vn, kết quả thu được hơn 20000 xe. Quy trình được chia thành ba giai đoạn chính để tối ưu hiệu suất và độ chính xác:
 
 1.  **Thu thập URL Hãng xe & Model (`Craw_Hang_Xe.py`)**: Tự động truy cập trang chủ, lấy URL của tất cả các danh mục hãng xe và model xe. Kết quả được lưu vào `car_model_urls.txt`.
 2.  **Thu thập URL Chi tiết (`Craw_Details.py`)**: Đọc danh sách URL danh mục, sau đó quét song song qua hàng nghìn trang con để thu thập tất cả URL của các tin đăng chi tiết. Kết quả được lưu vào `car_detail_urls.txt`.
